@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 from sqlalchemy.orm import Session
 
 from app.core.errors import APIErrorCode, APIException
-from app.core.security import AuthenticatedUser
+from app.core.security import AuthenticatedUser, enforce_ownership
 from app.models import (
     Attempt,
     Chapter,
@@ -31,17 +31,12 @@ class WhyEngineService:
         attempt = self.db.query(Attempt).filter_by(id=attempt_id).first()
         if not attempt:
             raise APIException(
-                code=APIErrorCode.RESOURCE_NOT_FOUND,
-                message=f"Attempt '{attempt_id}' not found.",
                 status_code=404,
+                error_code=APIErrorCode.RESOURCE_NOT_FOUND,
+                message=f"Attempt '{attempt_id}' not found.",
             )
 
-        if attempt.user_id != user.id:
-            raise APIException(
-                code=APIErrorCode.OWNERSHIP_VIOLATION,
-                message="Cannot diagnose attempt belonging to another user.",
-                status_code=403,
-            )
+        enforce_ownership(attempt.user_id, user)
 
         # Idempotency: Return existing completed run if already diagnosed
         existing_run = self.db.query(DiagnosticRun).filter_by(attempt_id=attempt.id).first()
@@ -155,7 +150,7 @@ class WhyEngineService:
                     id=f"plan_{uuid.uuid4().hex[:12]}",
                     user_id=user.id,
                     title="Active Mark Recovery Plan",
-                    target_exam="CHSE Class 12 / BSE Class 10",
+                    target_exam="chse_class_12",
                 )
                 self.db.add(plan)
                 self.db.flush()
@@ -170,40 +165,89 @@ class WhyEngineService:
                     reason=f"Targeted repair after incorrect attempt on question {question.id}.",
                     evidence_source="Official Approved Textbook",
                     target_weakness=rep_data.get("identified_cause"),
-                    status="PENDING",
+                    status="pending",
                 )
                 self.db.add(task)
 
         self.db.commit()
         return run
 
+    def list_user_reports(
+        self, user: AuthenticatedUser, offset: int = 0, limit: int = 20
+    ) -> list[RecoveryReport]:
+        """Lists historical mark recovery reports for the authenticated learner."""
+        return (
+            self.db.query(RecoveryReport)
+            .filter(RecoveryReport.user_id == user.id)
+            .order_by(RecoveryReport.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
     def verify_recovery(
-        self, report_id: str, is_mastery_correct: bool, user: AuthenticatedUser
+        self,
+        report_id: str,
+        user: AuthenticatedUser,
+        is_mastery_correct: Optional[bool] = None,
+        follow_up_attempt_id: Optional[str] = None,
+        submitted_response: Optional[Dict[str, Any]] = None,
     ) -> RecoveryReport:
-        """Verifies whether mark loss has been successfully recovered by follow-up check."""
+        """Verifies whether mark loss has been successfully recovered.
+        
+        Evaluates follow-up attempt correctness or submitted responses authoritatively
+        on the server while supporting safe retry idempotency.
+        """
         report = self.db.query(RecoveryReport).filter_by(id=report_id).first()
         if not report:
             raise APIException(
-                code=APIErrorCode.RESOURCE_NOT_FOUND,
-                message=f"Recovery report '{report_id}' not found.",
                 status_code=404,
+                error_code=APIErrorCode.RESOURCE_NOT_FOUND,
+                message=f"Recovery report '{report_id}' not found.",
             )
 
-        if report.user_id != user.id:
+        enforce_ownership(report.user_id, user)
+
+        # Idempotent retry: return report if already verified
+        if report.is_verified:
+            return report
+
+        verified = False
+        if follow_up_attempt_id:
+            follow_up_att = self.db.query(Attempt).filter_by(id=follow_up_attempt_id).first()
+            if not follow_up_att:
+                raise APIException(
+                    status_code=404,
+                    error_code=APIErrorCode.RESOURCE_NOT_FOUND,
+                    message=f"Follow-up attempt '{follow_up_attempt_id}' not found.",
+                )
+            enforce_ownership(follow_up_att.user_id, user)
+            verified = bool(follow_up_att.is_correct)
+        elif submitted_response is not None:
+            mastery = report.mastery_check_details or {}
+            expected = mastery.get("correct_option") or mastery.get("correct_answer")
+            if expected:
+                from app.services.attempt_service import evaluate_correctness
+                verified = evaluate_correctness(submitted_response, expected)
+            else:
+                verified = bool(submitted_response.get("selected_option"))
+        elif is_mastery_correct is not None:
+            verified = bool(is_mastery_correct)
+        else:
             raise APIException(
-                code=APIErrorCode.OWNERSHIP_VIOLATION,
-                message="Cannot verify recovery report belonging to another user.",
-                status_code=403,
+                status_code=422,
+                error_code=APIErrorCode.VALIDATION_ERROR,
+                message="Either follow_up_attempt_id, submitted_response, or is_mastery_correct must be provided.",
             )
 
-        if is_mastery_correct:
+        if verified:
             report.is_verified = True
             report.verified_at = datetime.now(timezone.utc)
             # Mark corresponding study plan task completed
             task_id = f"task_recov_{report.attempt_id}"
             task = self.db.query(StudyPlanTask).filter_by(id=task_id).first()
             if task:
-                task.status = "COMPLETED"
+                task.status = "completed"
 
         self.db.commit()
         return report

@@ -30,6 +30,10 @@ class QuestionService:
         chapter_id: Optional[str] = None,
         concept_id: Optional[str] = None,
         difficulty: Optional[str] = None,
+        class_level: Optional[int] = None,
+        subject_id: Optional[str] = None,
+        language: Optional[str] = None,
+        offset: int = 0,
         limit: int = 50,
     ) -> List[QuestionPublic]:
         """Fetch questions for student test-taking.
@@ -40,6 +44,10 @@ class QuestionService:
             chapter_id=chapter_id,
             concept_id=concept_id,
             difficulty=difficulty,
+            class_level=class_level,
+            subject_id=subject_id,
+            language=language,
+            offset=offset,
             limit=limit,
         )
         return [QuestionPublic.model_validate(q) for q in questions]

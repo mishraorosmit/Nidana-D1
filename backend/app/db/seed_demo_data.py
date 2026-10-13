@@ -605,3 +605,14 @@ def seed_demo_data(db: Session) -> None:
             db.add(q)
     db.commit()
     logger.info("Demo data seeding completed successfully.")
+
+
+if __name__ == "__main__":
+    from app.db.session import SessionLocal
+
+    logging.basicConfig(level=logging.INFO)
+    session = SessionLocal()
+    try:
+        seed_demo_data(session)
+    finally:
+        session.close()

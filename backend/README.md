@@ -17,31 +17,37 @@ backend/
 │   │       ├── router.py              # Master v1 API router
 │   │       └── endpoints/
 │   │           ├── health.py          # GET /api/v1/health (safe, no secrets)
-│   │           ├── users.py           # GET/PATCH /api/v1/me
+│   │           ├── users.py           # GET/PATCH /api/v1/me, GET /api/v1/me/stats
 │   │           ├── subjects.py        # /api/v1/subjects
 │   │           ├── chapters.py        # /api/v1/chapters (class level: 9, 10, 12)
 │   │           ├── concepts.py        # /api/v1/concepts (terminology mappings)
 │   │           ├── questions.py       # /api/v1/questions (answer keys concealed)
 │   │           ├── attempts.py        # /api/v1/attempts (authoritative grading)
-│   │           └── study_plans.py     # /api/v1/study-plans (interventions)
+│   │           ├── mock_exam.py       # /api/v1/mock (5-question mini-mock sessions)
+│   │           ├── diagnosis.py       # /api/v1/diagnosis (WHY Engine diagnosis & recovery)
+│   │           ├── study_plans.py     # /api/v1/study-plans (interventions)
+│   │           ├── sync.py            # /api/v1/sync (offline packs & batch sync)
+│   │           └── rag.py             # /api/v1/rag (curriculum retrieval & reindex adapter)
 │   ├── core/
 │   │   ├── config.py                  # Pydantic-settings typed configuration
 │   │   ├── constants.py               # Enums (ClassLevel, UserRole, Language, etc.)
 │   │   ├── errors.py                  # Standardized error codes & exception handlers
 │   │   ├── logging.py                 # Structured JSON logs with credential redaction
-│   │   └── security.py                # Supabase JWT token verification & ownership
+│   │   └── security.py                # JWT token verification & ownership enforcement
 │   ├── db/
 │   │   ├── base.py                    # DeclarativeBase & TimestampMixin
-│   │   └── session.py                 # Engine & SessionLocal lifecycle
-│   ├── models/                        # SQLAlchemy domain models
-│   ├── schemas/                       # Pydantic request & response schemas
+│   │   ├── session.py                 # SQLite WAL engine & SessionLocal lifecycle
+│   │   └── seed_demo_data.py          # 25 bilingual questions & curriculum seeder
+│   ├── models/                        # SQLAlchemy domain models (16 tables)
+│   ├── schemas/                       # Pydantic v2 request & response contracts
 │   ├── repositories/                  # Data access layer
-│   └── services/                      # Business rules & grading logic
+│   ├── services/                      # Business rules & grading logic
+│   ├── rag/                           # ChromaDB retrieval adapter (AI teammate integration)
+│   └── why_engine/                    # LangGraph diagnostic adapter & fallback doubles
 ├── alembic/                           # Database migration scripts
 │   ├── env.py
-│   └── versions/
-│       └── 0001_initial_schema.py     # Initial DDL migration
-├── tests/                             # Comprehensive test suite
+│   └── versions/                      # 0001 through 0004 migrations
+├── tests/                             # Comprehensive test suite (66 tests)
 ├── alembic.ini                        # Alembic migration configuration
 ├── pyproject.toml                     # Python package definitions
 ├── requirements.txt                   # Pinned runtime dependencies
@@ -127,7 +133,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 pytest -v
 ```
 
-All 22 test suites cover:
+All 66 test cases cover:
 - FastAPI app startup and OpenAPI schema generation.
 - Health endpoint response safety (no secrets/internals).
 - Typed configuration validation (production CORS/secret guards).

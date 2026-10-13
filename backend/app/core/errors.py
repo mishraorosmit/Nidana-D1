@@ -25,6 +25,8 @@ class APIErrorCode(str, Enum):
     RESOURCE_CONFLICT = "RESOURCE_CONFLICT"
     VALIDATION_ERROR = "VALIDATION_ERROR"
     INVALID_CLASS_LEVEL = "INVALID_CLASS_LEVEL"
+    INVALID_STATUS = "INVALID_STATUS"
+    INVALID_QUESTION = "INVALID_QUESTION"
     ATTEMPT_ALREADY_SUBMITTED = "ATTEMPT_ALREADY_SUBMITTED"
     UNAUTHORIZED_ANSWER_ACCESS = "UNAUTHORIZED_ANSWER_ACCESS"
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
@@ -35,13 +37,14 @@ class APIException(Exception):
 
     def __init__(
         self,
-        status_code: int,
-        error_code: APIErrorCode,
-        message: str,
+        status_code: int = 500,
+        error_code: Optional[APIErrorCode] = None,
+        message: str = "",
         details: Optional[Any] = None,
+        code: Optional[APIErrorCode] = None,
     ):
         self.status_code = status_code
-        self.error_code = error_code
+        self.error_code = error_code or code or APIErrorCode.INTERNAL_SERVER_ERROR
         self.message = message
         self.details = details
         super().__init__(message)
@@ -63,10 +66,11 @@ def build_error_payload(
 
 async def api_exception_handler(request: Request, exc: APIException) -> JSONResponse:
     """Handle custom APIException instances."""
+    code_val = exc.error_code.value if hasattr(exc.error_code, "value") else str(exc.error_code)
     return JSONResponse(
         status_code=exc.status_code,
         content=build_error_payload(
-            code=exc.error_code.value,
+            code=code_val,
             message=exc.message,
             details=exc.details,
         ),

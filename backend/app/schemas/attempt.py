@@ -13,6 +13,8 @@ class AttemptStartRequest(BaseModel):
     question_id: Optional[str] = Field(default=None, description="Base question ID")
     variant_id: Optional[str] = Field(default=None, description="Optional variant ID")
 
+    model_config = ConfigDict(extra="forbid")
+
 
 class AnswerSubmitRequest(BaseModel):
     """Payload submitted by the student when answering a question.
@@ -27,6 +29,8 @@ class AnswerSubmitRequest(BaseModel):
         default_factory=dict,
         description="Telemetry signals (e.g. answer_changes, confidence_rating, language_toggled)",
     )
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class AttemptResponse(BaseModel):

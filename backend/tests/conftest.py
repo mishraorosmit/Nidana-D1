@@ -136,3 +136,13 @@ def learner_auth_headers(learner_token: str) -> dict:
 def admin_auth_headers(admin_token: str) -> dict:
     return {"Authorization": f"Bearer {admin_token}"}
 
+
+@pytest.fixture
+def educator_auth_headers(educator_token: str) -> dict:
+    return {"Authorization": f"Bearer {educator_token}"}
+
+
+@pytest.fixture
+def other_learner_auth_headers(other_learner_token: str) -> dict:
+    return {"Authorization": f"Bearer {other_learner_token}"}
+

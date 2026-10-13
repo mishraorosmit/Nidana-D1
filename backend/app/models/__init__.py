@@ -5,6 +5,7 @@ from app.models.chapter import Chapter
 from app.models.concept import Concept
 from app.models.content_chunk import ContentChunk
 from app.models.diagnostic import DiagnosticProbe, DiagnosticRun, RecoveryReport
+from app.models.mock_session import MockTestSession
 from app.models.question import Question, QuestionVariant
 from app.models.study_plan import StudyPlan, StudyPlanTask
 from app.models.subject import Subject
@@ -20,6 +21,7 @@ __all__ = [
     "QuestionVariant",
     "ContentChunk",
     "Attempt",
+    "MockTestSession",
     "StudyPlan",
     "StudyPlanTask",
     "DiagnosticRun",

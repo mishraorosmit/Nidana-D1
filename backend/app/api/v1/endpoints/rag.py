@@ -6,7 +6,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.core.security import AuthenticatedUser, get_current_user
+from app.core.constants import UserRole
+from app.core.security import AuthenticatedUser, get_current_user, require_role
 from app.rag.chroma_client import ChromaVectorIndex
 from app.rag.provenance import build_grounded_context
 
@@ -50,7 +51,7 @@ def get_rag_health(
 def reindex_from_sqlite(
     db: Session = Depends(get_db),
     index: ChromaVectorIndex = Depends(get_chroma_index),
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    current_user: AuthenticatedUser = Depends(require_role(UserRole.ADMIN, UserRole.EDUCATOR)),
 ) -> Dict[str, Any]:
     return index.rebuild_from_sqlite(db)
 

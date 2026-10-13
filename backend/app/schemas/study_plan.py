@@ -21,6 +21,8 @@ class StudyPlanTaskBase(BaseModel):
 class StudyPlanTaskUpdate(BaseModel):
     status: Optional[TaskStatus] = None
 
+    model_config = ConfigDict(extra="forbid")
+
 
 class StudyPlanTaskRead(StudyPlanTaskBase):
     id: str

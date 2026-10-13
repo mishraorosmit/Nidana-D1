@@ -40,6 +40,7 @@ def test_alembic_migration_upgrade_and_schema():
             "question_variants",
             "content_chunks",
             "attempts",
+            "mock_test_sessions",
             "study_plans",
             "study_plan_tasks",
             "diagnostic_runs",
@@ -61,6 +62,10 @@ def test_alembic_migration_upgrade_and_schema():
         assert "source_locator" in chunk_columns
         assert "checksum" in chunk_columns
         assert "class_level" in chunk_columns
+
+        # Verify columns on users
+        user_columns = {col["name"] for col in inspector.get_columns("users")}
+        assert "class_level" in user_columns
 
         engine.dispose()
     finally:

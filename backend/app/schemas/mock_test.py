@@ -1,7 +1,8 @@
 """Pydantic schemas for the 5-Question Mini-Mock workflow."""
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.question import QuestionPublic
 
@@ -13,6 +14,8 @@ class MockStartRequest(BaseModel):
     subject_id: Optional[str] = Field(default=None, description="Optional subject filter")
     language: str = Field(default="bilingual", description="Target language ('odia', 'english', or 'bilingual')")
 
+    model_config = ConfigDict(extra="forbid")
+
 
 class MockSessionResponse(BaseModel):
     """Active mini-mock session with 5 questions (answer keys strictly concealed)."""
@@ -22,6 +25,26 @@ class MockSessionResponse(BaseModel):
     questions: List[QuestionPublic] = Field(description="The 5 active test questions without answer keys")
     total_questions: int = Field(default=5)
     total_marks: float = Field(description="Sum of maximum obtainable marks")
+    status: str = Field(default="in_progress")
+    started_at: Optional[datetime] = None
+
+
+class MockSessionSummary(BaseModel):
+    """Summary of a mock test session for learner history listing."""
+
+    session_id: str
+    class_level: int
+    subject_id: Optional[str] = None
+    status: str
+    total_questions: int
+    total_marks: float
+    score: Optional[float] = None
+    correct_count: Optional[int] = None
+    incorrect_count: Optional[int] = None
+    started_at: datetime
+    submitted_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MockAnswerSubmission(BaseModel):
@@ -32,11 +55,15 @@ class MockAnswerSubmission(BaseModel):
     time_taken_seconds: Optional[int] = Field(default=0, ge=0)
     learning_signals: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
+    model_config = ConfigDict(extra="forbid")
+
 
 class MockSubmitRequest(BaseModel):
     """Submission payload for completing the mini-mock."""
 
     answers: List[MockAnswerSubmission]
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class QuestionResultOutcome(BaseModel):

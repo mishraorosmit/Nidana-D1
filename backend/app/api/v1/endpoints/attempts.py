@@ -1,6 +1,6 @@
 """Attempt endpoints enforcing learner ownership and trusted server-side grading."""
 
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from app.api.deps import get_attempt_service, get_user_service
 from app.core.security import AuthenticatedUser, get_current_user
@@ -73,9 +73,20 @@ def get_attempt(
     description="Returns attempt history owned exclusively by the authenticated learner.",
 )
 def list_attempts(
+    lifecycle_state: Optional[str] = Query(None, description="Filter by lifecycle state ('in_progress', 'submitted')"),
+    question_id: Optional[str] = Query(None, description="Filter by question ID"),
+    is_correct: Optional[bool] = Query(None, description="Filter by correctness (true/false)"),
+    offset: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=100),
     current_user: AuthenticatedUser = Depends(get_current_user),
     attempt_service: AttemptService = Depends(get_attempt_service),
 ) -> List[AttemptResponse]:
-    attempts = attempt_service.list_user_attempts(user=current_user, limit=limit)
+    attempts = attempt_service.list_user_attempts(
+        user=current_user,
+        lifecycle_state=lifecycle_state,
+        question_id=question_id,
+        is_correct=is_correct,
+        offset=offset,
+        limit=limit,
+    )
     return [AttemptResponse.model_validate(a) for a in attempts]

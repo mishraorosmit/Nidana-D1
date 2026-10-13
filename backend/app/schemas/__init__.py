@@ -24,6 +24,14 @@ from app.schemas.study_plan import (
 from app.schemas.subject import SubjectBase, SubjectCreate, SubjectRead
 from app.schemas.user import UserBase, UserCreate, UserPublic, UserUpdate
 
+from app.schemas.diagnosis import (
+    DiagnosticProbeSummary,
+    DiagnosticRunResponse,
+    RecoveryReportResponse,
+    RecoveryVerifyRequest,
+    RecoveryVerifyResponse,
+)
+
 __all__ = [
     "HealthResponse",
     "APIErrorResponse",
@@ -60,4 +68,9 @@ __all__ = [
     "StudyPlanTaskBase",
     "StudyPlanTaskRead",
     "StudyPlanTaskUpdate",
+    "DiagnosticProbeSummary",
+    "DiagnosticRunResponse",
+    "RecoveryReportResponse",
+    "RecoveryVerifyRequest",
+    "RecoveryVerifyResponse",
 ]

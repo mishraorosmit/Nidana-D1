@@ -28,12 +28,20 @@ def evaluate_correctness(submitted_value: Any, correct_answer: Any) -> bool:
     else:
         submitted_val = submitted_value
 
-    if isinstance(correct_answer, list) and isinstance(submitted_val, list):
+    if isinstance(correct_answer, dict) and "selected_option" in correct_answer:
+        correct_val = correct_answer["selected_option"]
+    else:
+        correct_val = correct_answer
+
+    if submitted_val is None or correct_val is None:
+        return False
+
+    if isinstance(correct_val, list) and isinstance(submitted_val, list):
         return sorted([str(x).strip().upper() for x in submitted_val]) == sorted(
-            [str(x).strip().upper() for x in correct_answer]
+            [str(x).strip().upper() for x in correct_val]
         )
 
-    return str(submitted_val).strip().upper() == str(correct_answer).strip().upper()
+    return str(submitted_val).strip().upper() == str(correct_val).strip().upper()
 
 
 class AttemptService:
@@ -101,6 +109,9 @@ class AttemptService:
         enforce_ownership(attempt.user_id, user)
 
         if attempt.lifecycle_state == AttemptLifecycle.SUBMITTED.value:
+            # Safe retry check: if the submitted payload matches the already-evaluated response, return idempotently
+            if attempt.submitted_response == payload.submitted_response:
+                return attempt
             raise APIException(
                 status_code=400,
                 error_code=APIErrorCode.ATTEMPT_ALREADY_SUBMITTED,
@@ -161,5 +172,20 @@ class AttemptService:
         enforce_ownership(attempt.user_id, user)
         return attempt
 
-    def list_user_attempts(self, user: AuthenticatedUser, limit: int = 50) -> List[Attempt]:
-        return self.repo.list_by_user(user_id=user.id, limit=limit)
+    def list_user_attempts(
+        self,
+        user: AuthenticatedUser,
+        lifecycle_state: Optional[str] = None,
+        question_id: Optional[str] = None,
+        is_correct: Optional[bool] = None,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> List[Attempt]:
+        return self.repo.list_by_user(
+            user_id=user.id,
+            lifecycle_state=lifecycle_state,
+            question_id=question_id,
+            is_correct=is_correct,
+            offset=offset,
+            limit=limit,
+        )

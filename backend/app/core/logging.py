@@ -10,8 +10,22 @@ from typing import Any, Dict
 
 SENSITIVE_PATTERNS = [
     (re.compile(r"(Bearer\s+)[A-Za-z0-9\-._~+/]+=*", re.IGNORECASE), r"\1[REDACTED]"),
-    (re.compile(r'("(?:password|token|secret|api_key|service_role_key|jwt)":\s*")[^"]+(")', re.IGNORECASE), r'\1[REDACTED]\2'),
-    (re.compile(r'(password|token|secret|api_key)=[^&\s]+', re.IGNORECASE), r"\1=[REDACTED]"),
+    (
+        re.compile(
+            r'("(?:password|token|secret|api_key|service_role_key|jwt|access_token|refresh_token|supabase_key|private_key|phone|mobile)":\s*")[^"]+(")',
+            re.IGNORECASE,
+        ),
+        r"\1[REDACTED]\2",
+    ),
+    (
+        re.compile(
+            r"(password|token|secret|api_key|access_token|refresh_token|cookie)=[^&\s]+",
+            re.IGNORECASE,
+        ),
+        r"\1=[REDACTED]",
+    ),
+    (re.compile(r"(Cookie:\s*)[^\r\n]+", re.IGNORECASE), r"\1[REDACTED]"),
+    (re.compile(r"(Authorization:\s*)[^\r\n]+", re.IGNORECASE), r"\1[REDACTED]"),
 ]
 
 

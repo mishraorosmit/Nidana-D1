@@ -1,7 +1,7 @@
 """User domain model representing learner and educator profiles."""
 
-from typing import List
-from sqlalchemy import Boolean, String
+from typing import List, Optional
+from sqlalchemy import Boolean, CheckConstraint, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.constants import ExamTarget, PreferredLanguage, UserRole
@@ -23,6 +23,11 @@ class User(Base, TimestampMixin):
     exam_target: Mapped[str] = mapped_column(
         String(50), default=ExamTarget.CHSE_CLASS_12.value, nullable=False
     )
+    class_level: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        CheckConstraint("class_level IN (9, 10, 12)", name="ck_users_class_level"),
+        nullable=True,
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     # Relationships
@@ -31,4 +36,7 @@ class User(Base, TimestampMixin):
     )
     study_plans: Mapped[List["StudyPlan"]] = relationship(
         "StudyPlan", back_populates="user", cascade="all, delete-orphan"
+    )
+    mock_sessions: Mapped[List["MockTestSession"]] = relationship(
+        "MockTestSession", back_populates="user", cascade="all, delete-orphan"
     )

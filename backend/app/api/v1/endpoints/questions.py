@@ -28,12 +28,23 @@ def list_questions(
     chapter_id: Optional[str] = Query(default=None),
     concept_id: Optional[str] = Query(default=None),
     difficulty: Optional[QuestionDifficulty] = Query(default=None),
+    class_level: Optional[int] = Query(default=None, description="Class level filter (9, 10, or 12)"),
+    subject_id: Optional[str] = Query(default=None, description="Subject ID filter"),
+    language: Optional[str] = Query(default=None, description="Language filter ('odia', 'english', 'bilingual')"),
+    offset: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=100),
     service: QuestionService = Depends(get_question_service),
 ) -> List[QuestionPublic]:
     diff_val = difficulty.value if difficulty else None
     return service.list_public_questions(
-        chapter_id=chapter_id, concept_id=concept_id, difficulty=diff_val, limit=limit
+        chapter_id=chapter_id,
+        concept_id=concept_id,
+        difficulty=diff_val,
+        class_level=class_level,
+        subject_id=subject_id,
+        language=language,
+        offset=offset,
+        limit=limit,
     )
 
 
