@@ -4,6 +4,37 @@ All backend architectural changes, migrations, API contracts, environment update
 
 ---
 
+## [Technical Architecture Education & Factual Inventory Documentation] - 2026-10-13
+
+### 1. Scope & Implementation Details
+- **Comprehensive Backend Architecture Guide (`docs/backend-architecture-guide.md`):**
+  - Authored a beginner-friendly, end-to-end technical guide explaining the NIDANA pedagogical loop ("Attempt → Diagnose → Repair → Replan → Verify Recovery") and core non-negotiable architectural principles.
+  - Documented the exact execution lifecycle of an incoming HTTP request from Uvicorn socket handling, CORS header evaluation, route dispatch, dependency injection (`get_current_user`, `get_db`), Pydantic v2 input validation, service business logic, SQLAlchemy repository transactions, to response formatting and exception handling.
+- **Factual Architecture Inventory:**
+  - Audited and categorized all backend features into Implemented (100%), Partially Implemented (Deterministic Adapters), Planned/Deferred (Voice, District dashboards, Mesh sync), and External (Supabase Auth, Gemini API, Langfuse).
+  - Documented the complete relational database architecture: hardened SQLite engine with WAL mode and foreign key PRAGMAs, Alembic migration chain (0001 through 0004), and inventory of all 16 relational tables with key columns and foreign keys.
+- **Cross-Team Communication & Boundary Delineation:**
+  - Documented explicit integration surfaces with the React + Vite frontend (`http://localhost:5173`, offline Dexie queue, sync endpoints) and the separate RAG/Agentic AI teammate (`ChromaVectorIndex`, `EmbeddingAdapter`, LangGraph `DiagnosisState`, `GeminiAdapter`).
+  - Recorded exact handoff points, explaining that the backend provides data models and test doubles while the AI teammate owns retrieval tuning and reasoning prompts.
+- **Legacy Documentation Discrepancy Reconciliation:**
+  - Audited legacy root documentation files (`Backend_guide.md`, `Tech_stack.md`, `Guardrail.md`) and identified specific inconsistencies with the actual implementation (e.g. historical references to PostgreSQL/Supabase DB with `pgvector` vs actual SQLite WAL layer; Next.js vs actual React 19 + Vite 6 PWA; outdated route suggestions vs actual standardized endpoints).
+- **Application Code Invariant:**
+  - Application source code was strictly preserved without modifications.
+
+### 2. Files Added & Modified
+- `docs/backend-architecture-guide.md` — Created comprehensive, beginner-friendly architecture guide, HTTP execution trace, and factual inventory.
+- `changelog_backend.md` — Appended documentation-audit and technical education work.
+
+### 3. Checks Performed & Results
+- Verified file creation and content integrity of `docs/backend-architecture-guide.md`.
+- Re-verified test suite: `backend\.venv\Scripts\pytest.exe -v` (66 passed, 0 failed in 3.47s).
+- Verified zero uncommitted or altered application code files in `backend/app/` or `backend/tests/`.
+
+### 4. Next Step
+- Deliver the architecture walkthrough and factual inventory to the user, providing a clear reference for onboarding new backend, frontend, and AI engineers onto the project.
+
+---
+
 ## [Final Backend Handoff: Codebase Consolidation, Directory Tree Audit, Clean Up, & Cross-Team Readiness] - 2026-10-13
 
 ### 1. Scope & Implementation Details
